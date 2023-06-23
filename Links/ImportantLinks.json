@@ -1,13 +1,13 @@
 {
 	"Gcloud": {
 		"CloudRun": "https://console.cloud.google.com/run",
-		"Security": "https://console.cloud.google.com/security/command-center/overview?project=company-0d7888e4d8f4676d39af5d10&cloudshell=false",
-		"Database": "https://console.cloud.google.com/sql/instances?project=company-0d7888e4d8f4676d39af5d10"
+		"Security": "",
+		"Database": ""
 	},
 	"Sharepoint": {
-		"Sharepoint": "https://azurecompany.sharepoint.com/sites/serviceandmaintenance/EM%26R%20Documents/Forms/AllItems.aspx?RootFolder=%2Fsites%2Fserviceandmaintenance%2FEM%26R%20Documents%2FEM%26R%20Product%20Teams%2F02%5FVHA%5FProject%5FSH%2F03%5FMACHE&FolderCTID=0x0101000CDA98AEEE8D0B4C90EAFC9F22000FAF&View=%7BFAC2567A%2D212D%2D4A51%2DAE60%2D7D8583680440%7D",
-		"Project_Architecture": "https://azurecompany.sharepoint.com/:p:/r/sites/serviceandmaintenance/EM%26R%20Documents/EM%26R%20Product%20Teams/02_VHA_Project_SH/03_MACHE/Latest_Project/03%20Architecture%20and%20Sequence%20diagrams/Project%20Architecture.pptx?d=we0f03f49e1fe4c56b4b86e72036afce2&csf=1&web=1&e=gj7li9",
-		"Project_VSH_ProdDeploymentTracker": "https://azurecompany.sharepoint.com/:x:/r/sites/serviceandmaintenance/EM%26R%20Documents/EM%26R%20Product%20Teams/02_VHA_Project_SH/03_MACHE/Common/Project%20and%20VSH%20Prod%20Deployment%20Tracker.xlsx?d=w43286905e8774c9998345027aaf2ad73&csf=1&web=1&e=RKGbf6"
+		"Sharepoint": "",
+		"Project_Architecture": "",
+		"Project_VSH_ProdDeploymentTracker": ""
 	},
 	"Others": {
 		"CloudRun": "https://google.com",
@@ -16,6 +16,6 @@
 		"Splunk": "https://splunk.shc.company.com",
 		"GRE Dashboard": "https://observability.sre.company.com/",
 		"Dynatrace": "https://www.dynatrace.company.com",
-		"Jenkins": "https://vhadiagnostics-jenkins.apps.pd108.caas.gcp.company.com"
+		"Jenkins": "https://jenkins.apps.pd.caas.gcp.company.com"
 	}
 }
