@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if ! type execute_post_request > /dev/null 2>&1; then
+  . $POSTMAN_PATH/httpUmbrella
+fi
+
+# Define the request parameters
+url="$AZURE_CLOUD_HOST/oauth2/token"
+headers="Content-Type: application/x-www-form-urlencoded"
+data_urlencoded="client_id=$AZURE_CLIENT_ID
+client_secret=$AZURE_CLIENT_SECRET
+grant_type=client_credentials
+scope=openid
+resource=$1"
+
+execute_post_request --url="$url" --headers="$headers" --data-urlencode="$data_urlencoded" --store-response

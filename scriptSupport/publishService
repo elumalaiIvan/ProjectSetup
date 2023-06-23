@@ -1,0 +1,50 @@
+#!/bin/sh
+
+set -e
+
+pushd $Project_SCRIPT_PATH > /dev/null
+
+. $Project_SCRIPT_PATH/color.sh
+
+projectId=`grep projectID $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+serviceRootPath=`grep serviceRootPath $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+propertyFile=`grep propertyFile $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+#service=`grep service $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+registryImageName='core-service'
+dynatraceName="${registryImageName}-stg-gcp"
+dynatraceEnv="preprod"
+#tag=$(date)
+tag="1"
+companyRegistryUsername='$app'
+companyRegistryPassword='34AIOUKUDU7NPWTTSBRRPMRF5ARPWNQ7H4TB0EWXXM8ZPI9GD3CDUE31HXZCT0GWMV5KL4DLMKJRV2JIOFPN6VL39VGLTWT2BO962DJ3LFZ7QHQNO0GV4PL1'
+primaryRegion='us-central1'
+vpcConnector="projects/prj-pp-gen-preprod-net-acc7/locations/${primaryRegion}/connectors/preprod-gen-central1"
+maximumInstance=100
+environment='gcp-stg'
+propertyName='CORE_SERVICE_PROP'
+
+echo "Building image..."
+
+#sh $serviceRootPath/gradlew -x test -PcompanyRegistryUsername=$companyRegistryUsername -PcompanyRegistryPassword=$companyRegistryPassword -PartifactRegistryToken="$(gcloud auth print-access-token)" + "-PregistryImageName=${registryImageName}" + " -PgcpProjectId=${projectId}"  + " -PdynatraceName=${dynatraceName}" + " -PdynatraceEnv=${dynatraceEnv}" + " -Ptag=${tag}" + " build jib"
+
+#sh $serviceRootPath/gradlew -x test -PcompanyRegistryUsername="\$app" -PcompanyRegistryPassword="34AIOUKUDU7NPWTTSBRRPMRF5ARPWNQ7H4TB0EWXXM8ZPI9GD3CDUE31HXZCT0GWMV5KL4DLMKJRV2JIOFPN6VL39VGLTWT2BO962DJ3LFZ7QHQNO0GV4PL1" -PartifactRegistryToken="$(gcloud auth print-access-token)" -Pprofile=gcp-stg -PgcpProjectId=company-0d7888e4d8f4676d39af5d10 -PregistryImageName=schedule-service -Ptag=1 build jib
+
+#gcloud run deploy ${registryImageName} --image=us-central1-docker.pkg.dev/${projectId}/company-container-images/${registryImageName}:${tag} service-account=sa-myProject-run@${projectId}.iam.gserviceaccount.com region=${primaryRegion}
+#project=${projectId}
+#no-allow-unauthenticated
+#platform=managed
+#ingress=internal
+#vpc-egress=all-traffic
+#vpc-connector=${primaryRegionVpcConnector}
+#memory=4Gi
+#cpu=2
+#min-instances=1
+#max-instances=${maximumInstance}
+#no-cpu-throttling
+#set-secrets=/etc/secrets/db/client_cert/client_cert.crt=DB_CLIENT_CERT_DUPLICATE:latest,/etc/secrets/db/client_key/client_key.pk8=DB_CLIENT_KEY_DUPLICATE:latest,/etc/secrets/db/root_cert/root_cert.crt=DB_ROOT_CERT_DUPLICATE:latest,/etc/secrets/prop/application-${environment}.properties=${propertyName}:latest
+#set-env-vars='SPRING_PROFILES_ACTIVE=${environment}'
+
+#gcloud run deploy --image=us-central1-docker.pkg.dev/${projectId}/company-container-images/${registryImageName}:${tag} --project=${projectId} --
+
+gcloud run deploy ${registryImageName} --set-env-vars='SPRING_PROFILES_ACTIVE=${environment}' --image=us-central1-docker.pkg.dev/${projectId}/company-container-images/${registryImageName}:${tag} --service-account=sa-myProject-run@${projectId}.iam.gserviceaccount.com --region=${primaryRegion} --project=${projectId} --no-allow-unauthenticated --platform=managed --ingress=internal --vpc-egress=all-traffic --vpc-connector=${vpcConnector} --memory=4Gi --cpu=4 --min-instances=1 --max-instances=1 --no-cpu-throttling
+

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+pushd $Project_SCRIPT_PATH > /dev/null
+
+ primaryRegion='us-central1'
+ previouscloudRunRevision='core-service-00028-zof'
+ project_id=`grep projectID $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+
+gcloud run services update-traffic core-service --project=${project_id} --region=${primaryRegion} --to-revisions ${previouscloudRunRevision}=100
+
+popd > /dev/null

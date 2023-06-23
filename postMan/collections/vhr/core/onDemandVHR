@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. $POSTMAN_PATH/httpUmbrella
+
+prepareCatToken
+
+# Define the request parameters
+url="$APIM_HOST/api/myProject/v1/on-demand-report"
+headers="Application-id: $OWNER_WEB_APPLICATION_ID
+auth-token: $access_token
+Trace-Id: $TRACE_ID"
+data_json=$(cat <<EOF
+{
+  "Vin": "$fpapp008_VIN",
+  "SourceCode": "OW",
+  "RoutineMaintenanceFlag": true,
+  "FieldServiceFlag": true,
+  "DealerInspectionitemsFlag": true,
+  "CustomerOwnerRewardsFlag": true,
+  "CouponsFlag": true
+}
+EOF
+)
+
+execute_post_request --url="$url" --headers="$headers" --data-json "$data_json"

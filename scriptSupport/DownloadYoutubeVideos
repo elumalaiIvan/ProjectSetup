@@ -1,0 +1,111 @@
+#!/bin/sh
+
+playList=""
+video=""
+location=""
+
+#getSecretName() {
+#  local secret=""
+#if [[ $1 == "myProject-schedules-service" ]]; then
+#      secret="SCHEDULE_SERVICE_PROP"
+#   elif [[ $service == "myProject-core-service" ]]; then
+#      secret="CORE_SERVICE_PROP"
+#   else
+#     echo "${RED} $service not a valid service ${NO_COLOR}"
+#     exit 1;
+#fi
+#echo $secret
+#}
+
+die() {
+   printf '%s\n' "$1" >&2
+   exit 1
+}
+
+checkEmpty() {
+   if [[ -z $1 ]]; then
+      echo "try again with non empty value"
+      exit 1;
+   fi
+}
+
+checkLocation() {
+  if [ ! -d $1 ]; then
+      echo "File($1): not found!, enter valid file path"
+      exit 1;
+  fi
+}
+
+  while :; do
+     case $1 in
+         --playList)       # Takes an option argument; ensure it has been specified.
+             if [ "$2" ]; then
+               playList=$2
+               shift
+             else
+                 die 'ERROR: "--service" requires a non-empty option argument.'
+             fi
+             ;;
+         --playList=?*)
+             playList=${1#*=}
+             ;;
+         --playList=)         # Handle the case of an empty --file=
+             die 'ERROR: "--secret" requires a non-empty option argument.'
+             ;;
+         --video)
+            if [ "$2" ]; then
+               video=$2
+               shift
+            else
+               die 'ERROR: "--data-file" requires a non-empty option argument.'
+            fi
+            ;;
+         --video=?*)
+             video=${1#*=} # Delete everything up to "=" and assign the remainder.
+             ;;
+         --video=)         # Handle the case of an empty --file=
+             die 'ERROR: "--data-file" requires a non-empty option argument.'
+             ;;
+         --location)
+             if [ "$2" ]; then
+                location=$2
+                checkLocation
+                shift
+             else
+                die 'ERROR: "--data-file" requires a non-empty option argument.'
+             fi
+             ;;
+         --location=?*)
+             location=${1#*=} # Delete everything up to "=" and assign the remainder.
+             checkLocation
+             ;;
+         --location=)         # Handle the case of an empty --file=
+             die 'ERROR: "--data-file" requires a non-empty option argument.'
+             ;;
+         --)              # End of all options.
+             shift
+             break
+             ;;
+         -?*)
+             printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+             ;;
+         *)               # Default case: No more options, so break out of the loop.
+             break
+     esac
+
+     shift
+  done
+
+  echo "Need to tes, its not working currently"
+
+  playList=https://www.youtube.com/watch?v=CW5izVKbAuU&list=PLqq-6Pq4lTTa8V613TZhGq4o8hSgkMGQ0&index=12
+
+if [[ ! -z "$playList" ]]; then
+    youtube-dl --get-id "$playList" | xargs -I '{}' -P 5 youtube-dl 'https://youtube.com/watch?v={}'
+    exit 0;
+fi
+
+#if [[ $secretValue == "" ]] &&  [[ $dataFileLocation == "" ]]; then
+#  echo "missing --secret-value (or) --data-file"
+#  exit 1;
+#fi

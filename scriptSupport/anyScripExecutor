@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# use this for tryouts
+
+#if ifconfig | grep tun0 > /dev/null; then
+#    # VPN is active, make request using curl
+##    curl http://example.com/myservice
+#    echo "VPN is  active, cannot make request"
+#
+#else
+#    # VPN is not active, exit script
+#    echo "VPN is not active"
+#    exit 1
+#fi
+
+vpn_interface=$(ifconfig | grep -o "utun[0-9]" | head -1)
+
+if [[ -n "$vpn_interface" ]]; then
+  vpn_gateway=$(netstat -rn | awk -v utun_ip="$(ifconfig $vpn_interface | awk '/inet/ {print $2}')" '/^default.* / {if ($2==utun_ip) print $2; exit}')
+  if [[ -n "$vpn_gateway" ]]; then
+    echo "you are on VPN"
+  else
+    echo "you are not on VPN"
+  fi
+else
+  echo "you are not on VPN from ifconfig"
+fi

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# 2>&1 means "redirect standard error to standard output". This is often done to capture both normal output and error messages in the same output stream, which can be useful for logging or error handling purposes.
+if ! type execute_post_request > /dev/null 2>&1; then
+  . $POSTMAN_PATH/httpUmbrella
+fi
+
+# Define the request parameters
+ibmc_url="$IBMC_CLOUD_HOST/v1.0/endpoint/default/token"
+ibmc_headers="Content-Type: application/x-www-form-urlencoded"
+data_urlencoded="username=$USER_NAME
+password=$USER_PASSWORD
+grant_type=password
+client_id=$CLIENT_ID"
+execute_post_request --url="$ibmc_url" --headers="$ibmc_headers" --data-urlencode="$data_urlencoded"
+access_token=$(echo "$response_string" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+
+csdn_cat_url="$APIM_HOST/api/token/v2/cat-with-ci-access-token"
+cat_headers="Application-id: $OWNER_WEB_APPLICATION_ID"
+#json_string='{
+#  "ciToken": "'"$access_token"'"
+#}'
+data_json=$(cat <<EOF
+{
+  "ciToken": "$access_token"
+}
+EOF
+)
+execute_post_request --url "$csdn_cat_url" --headers "$cat_headers" --data-json "$data_json" --store-response

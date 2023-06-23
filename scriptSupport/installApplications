@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+brew install jq
+brew install openjdk@11
+#brew install openjdk@11 unless system "/usr/libexec/java_home --failfast"
+
+sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+
+#echo 'export PATH="/usr/local/opt/openjdk@11/bin:$PATH"' >> ~/.zshrc
+#export CPPFLAGS="-I/usr/local/opt/openjdk@11/include"
+
+#declare -a applicationToBeInstalled=("datagrip" "iterm2")
+declare -a applicationToBeInstalled=("datagrip" "iterm2" "intellij-idea" "slack" "google-cloud-sdk" "http-toolkit")
+
+## now loop through the above array
+for i in "${applicationToBeInstalled[@]}"
+do
+   applicationName="$i"
+   brew install --cask $applicationName
+done

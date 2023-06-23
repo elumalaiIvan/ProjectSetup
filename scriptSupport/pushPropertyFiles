@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+pushd $Project_SCRIPT_PATH > /dev/null
+
+#. $Project_SCRIPT_PATH/color.sh
+. $Project_SCRIPT_PATH/secretSupport
+
+serviceRootPath=`grep serviceRootPath $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+propertyFile=`grep propertyFile $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+service=`grep service $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+secret=$(getSecretName ${service})
+
+echo "Pushing property configuration from ${serviceRootPath}/src/main/resources/$propertyFile to GCP secret manager..."
+
+sh $Project_SCRIPT_PATH/updateSecret --secret=$secret --data-file=${serviceRootPath}/src/main/resources/$propertyFile
+
+echo "${GREEN} $propertyFile file updated in secret manager${NO_COLOR}"
+
+popd > /dev/null

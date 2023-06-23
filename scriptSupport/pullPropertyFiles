@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e
+
+pushd $Project_SCRIPT_PATH > /dev/null
+
+. $Project_SCRIPT_PATH/color.sh
+. $Project_SCRIPT_PATH/secretSupport
+
+project_id=`grep projectID $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+serviceRootPath=`grep serviceRootPath $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+propertyFile=`grep propertyFile $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+service=`grep service $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+secretName=$(getSecretName ${service})
+
+echo "Pulling $secretName from GCP secret manager..."
+gcloud secrets versions access latest --secret=$secretName --project=${project_id} > ${serviceRootPath}/src/main/resources/$propertyFile
+echo "${GREEN} $propertyFile file updated ${NO_COLOR}"
+
+popd > /dev/null

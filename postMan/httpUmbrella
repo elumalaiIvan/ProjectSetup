@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Enable interpretation of backslash escapes in echo commands
+shopt -s xpg_echo
+
+
+
+#hardcoded utun3, but not sure weather VPN connection will be established using utun3
+#if ifconfig | grep -q "utun3"; then
+#  echo "you are under VPN"
+#  export ALL_PROXY="http://internet.company.com:83"
+#else
+#  export http_proxy=
+#fi
+
+. $Project_SCRIPT_PATH/color.sh
+ENVIRONMENT=$(myProject config get --env)
+POSTMAN_ENV_PATH="$Project_REPOS_PATH/ProjectSetup/postMan/environments/$ENVIRONMENT"
+
+echo "${RED}Current env: ${ENVIRONMENT}"
+echo "You can change it by running ${BOLD} myProject config set --env=prod ${NORMAL} ${NO_COLOR}"
+
+[ ! -e "$POSTMAN_ENV_PATH/environment" ] && sh "$POSTMAN_ENV_PATH/postmanEnvironmentDecrypt"
+. $POSTMAN_ENV_PATH/environment
+. $POSTMAN_PATH/httpClientHelper
+. $POSTMAN_PATH/httpClient
+. $POSTMAN_PATH/tokenHelper
+
+

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+. $Project_SCRIPT_PATH/color.sh
+
+#sh $Project_SCRIPT_PATH/gcpLogin "$@"
+sh $Project_SCRIPT_PATH/pullPropertyFiles
+sh $Project_SCRIPT_PATH/pullDBCertificates

@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# Fail immediately if any errors occur
+set -e
+
+echo "Caching system password..."
+sudo -K
+sudo true;
+
+read -r -p "Do you have Project projects in a folder other than ~/company/Project/repos? (y/n) " answer
+
+if [[ $answer =~ ^[Yy]$ ]]; then
+    read -r -p "Please provide the full path to the root folder: " path
+    Project_REPOS_PATH="$path"
+else
+    Project_REPOS_PATH="$HOME/company/Project/repos"
+fi
+echo "Project_REPOS_PATH is set to: $Project_REPOS_PATH"
+
+CURRENT_SCRIPT_DIR="$(dirname "$0")"
+ROOT_SCRIPT_DIR="$(dirname $CURRENT_SCRIPT_DIR)"
+
+echo "current script directory: $CURRENT_SCRIPT_DIR"
+echo "root script directory: $ROOT_SCRIPT_DIR"
+
+if [ ! -f ~/.myProjectc ]; then
+  Project_SCRIPT_PATH="$Project_REPOS_PATH/ProjectSetup/scriptSupport"
+  POSTMAN_PATH="$Project_REPOS_PATH/ProjectSetup/postMan"
+
+      cat > ~/.myProjectc <<EOF
+export Project_REPOS_PATH=$Project_REPOS_PATH
+export Project_SCRIPT_PATH=$Project_SCRIPT_PATH
+export POSTMAN_PATH=$POSTMAN_PATH
+EOF
+ echo "default path set to $HOME/company/Project/repos, restart the terminal"
+fi
+
+if [ ! -f ~/.bashrc ]; then
+    echo "source ~/.myProjectc" > ~/.bashrc
+fi
+if ! grep -q "~/.myProjectc" ~/.bashrc; then
+    echo "source ~/.myProjectc" >> ~/.bashrc
+fi
+echo "shopt -s xpg_echo" >> ~/.bashrc
+
+if ! grep -q "~/.bashrc" ~/.zshrc; then
+    echo "source ~/.bashrc" >> ~/.zshrc
+fi
+source "$HOME/.bashrc"
+
+# When initially downloaded, it will move the ProjectSetup project to Project repos directory
+if [ ! -d "$Project_REPOS_PATH" ]; then
+  mkdir -pv $Project_REPOS_PATH
+  mv -n $ROOT_SCRIPT_DIR $Project_REPOS_PATH
+fi
+
+#install command line tool
+sh $Project_REPOS_PATH/ProjectSetup/cli/installCli
+
+sh $Project_SCRIPT_PATH/homebrew
+sh $Project_SCRIPT_PATH/finished

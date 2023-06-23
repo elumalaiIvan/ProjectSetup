@@ -1,0 +1,49 @@
+#!/bin/bash
+
+CONFIG_FILE=$POSTMAN_PATH/environments/config.properties
+
+update_environment() {
+    if [[ $1 != "stage" && $1 != "prod" ]]; then
+          echo "Error: Invalid environment value '$1'. Only 'stage' or 'prod' are allowed."
+          return 1
+    fi
+
+    if grep -q "^environment=" $CONFIG_FILE; then
+        # The environment property already exists in the file, so update it
+        sed -i "" "s/^environment=.*/environment=$1/" $CONFIG_FILE
+    else
+        # The environment property does not exist in the file, so create it
+        echo "environment=$1" >> $CONFIG_FILE
+    fi
+
+    source $CONFIG_FILE
+
+    # Print the new value of the environment variable
+    echo "The new environment is $environment"
+}
+
+if [[ $1 == "set" ]]; then
+    # Set the value of the environment property in the config.properties file
+    case $2 in
+            --env=*)
+                env=${2#--env=}
+                update_environment $env
+                ;;
+            *)
+                echo "Usage: myProject $1 config set --env=<env>"
+                ;;
+    esac
+elif [[ $1 == "get" ]]; then
+    # Load the config.properties file into the current shell environment
+    source $CONFIG_FILE
+    # Print the current value of the environment variable
+    echo "$environment"
+elif [[ $2 == "--env" ]]; then
+    # Load the config.properties file into the current shell environment
+    update_environment $3
+    # Print the current value of the environment variable
+    echo "$environment"
+else
+    echo "Usage: myProject $1 [set|get|config set --env=<env>]"
+fi
+

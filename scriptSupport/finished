@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+echo
+echo "-----------------------------------------"
+echo "Done! Use the bellow command once restarted your terminal"
+echo "myProject start"
+echo "-----------------------------------------"

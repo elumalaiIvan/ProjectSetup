@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -e
+echo "Caching system password..."
+sudo -K
+sudo true;
+
+myProject gitTools
+myProject cloneRepos
+myProject tweakMacPreferences
+myProject installApplications
+myProject decrypt --pass='getThisFromManager(sangeetha)'
+myProject installProjectPlugin
+

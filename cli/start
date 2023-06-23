@@ -1,0 +1,2 @@
+#!/bin/sh
+~/workspace/fcs/script-support/start "$@"

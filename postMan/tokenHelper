@@ -1,0 +1,91 @@
+#!/bin/bash
+
+#set -x
+
+CAT_RESPONSE_FILE="$POSTMAN_ENV_PATH/responses/catToken-response.json"
+AZURE_RESPONSE_FILE="$POSTMAN_ENV_PATH/responses/azureToken-response.json"
+ADFS_RESPONSE_FILE="responses/adfsToken-response.json"
+
+token_response_file=""
+token_script=""
+access_token=""
+expires_in=""
+
+secondaryResponseFile() {
+  local primaryFile=$1
+  local suffix=1
+  local filename=$(basename "$primaryFile")
+  local directory="$(dirname "$primaryFile")"
+  local extension="${filename##*.}"
+  local baseFilename="${filename%.*}"
+  # Check if the response file already exists
+  secondaryFileName="$directory/${baseFilename}-${suffix}.${extension}"
+
+  echo "$secondaryFileName"
+}
+
+prepareCatToken() {
+  prepareToken "$CAT_RESPONSE_FILE" "catToken"
+}
+
+prepareAzureToken() {
+  prepareToken "$AZURE_RESPONSE_FILE" "azureToken" "$1"
+}
+
+prepareAdfsToken() {
+  prepareToken "$ADFS_RESPONSE_FILE" "adfsToken" "$ADFS_RESOURCE"
+}
+
+prepareToken() {
+    token_response_file="$1"
+    has_token_expired "$token_response_file" && {
+      executeTokenScript "$2" "$3"
+      extract_token $token_response_file
+    }
+}
+
+# Function to check if the access_token has expired
+has_token_expired() {
+  local token_response_file="$1"
+  #if file not exist
+  [ ! -e "$token_response_file" ] && return 0
+
+  extract_token "$token_response_file"
+
+  [ "$access_token" == "" ] && return 1
+
+  local current_time=$(date +%s)
+  # Get the last updated timestamp of the file
+  local last_updated=$(stat -c "%Y" "$token_response_file" 2>/dev/null || stat -f "%m" "$token_response_file" 2>/dev/null)
+  # Calculate the expiration time by adding expires_in to the last updated timestamp
+  local expiration_time=$((last_updated + expires_in))
+
+  # Compare the current time with the expiration time
+  if [ "$current_time" -gt "$expiration_time" ]; then
+    echo "TOKEN: Expired"
+    return 0 # Token has expired
+  else
+    echo "TOKEN: Last updated: $(date -r $last_updated)"
+    echo "TOKEN: Expiration in: $((expires_in / 60)) minutes"
+    echo "TOKEN: Expiration time: $(date -r $expiration_time)"
+    return 1 # Token is still valid
+  fi
+}
+
+executeTokenScript() {
+  token_script="$1"
+  resource="$2"
+  . "$POSTMAN_PATH/collections/$token_script" "$resource"
+}
+
+extract_token() {
+  # Read the response JSON from a file
+  response_file_1=$(secondaryResponseFile "$1")
+  [ -f "$response_file_1" ] && token_response_file=$response_file_1
+
+  extracted_response=$(cat "$token_response_file")
+
+  # Extract the access_token and expires_in values using jq
+  access_token=$(echo "$extracted_response" | jq -r '.access_token')
+  expires_in=$(echo "$extracted_response" | jq -r '.expires_in')
+}

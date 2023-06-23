@@ -1,0 +1,10 @@
+.DS_Store
+/scriptSupport/token.key
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/ProjectSetup.iml
+/scriptSupport/projectInfo.txt
+**/environment
+**/loginSecrets.sh
+**/responses

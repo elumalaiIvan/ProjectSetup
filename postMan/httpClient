@@ -1,0 +1,202 @@
+#!/bin/bash
+
+#Consider the following factors when deciding which one is best for your script:
+#
+#Portability: If your script needs to run on various Unix-like systems and you want to ensure maximum compatibility, using #!/bin/sh (POSIX-compliant) is recommended.
+#
+#Required features: If your script relies on specific Bash features that are not available in the standard POSIX shell, or if you prefer using Bash-specific syntax or functionalities, then #!/bin/bash would be the appropriate choice.
+#
+#User environment: If you are certain that the target system has Bash installed and want to leverage its capabilities, using #!/bin/bash provides access to those features.
+#
+#It's worth noting that many modern systems have Bash installed by default, so the choice between #!/bin/sh and #!/bin/bash may not make a significant difference. However, if you aim for maximum portability, it's advisable to stick to POSIX-compliant shell scripts using #!/bin/sh.
+
+#if its asking for decrypting pass ask your manager ksangee8 or anchor
+
+parseAndValidateNamedArguments() {
+  while :; do
+    case $1 in
+    --method) # Takes an option argument; ensure it has been specified.
+      if [ "$2" ]; then
+        method=$2
+        shift
+      else
+        die 'ERROR: "--method" requires a non-empty option argument.'
+      fi
+      ;;
+    --method=?*)
+      method=${1#*=}
+      ;;
+    --headers)
+        if [ "$2" ]; then
+          headers=$2
+          shift
+        else
+          die 'ERROR: "--headers" requires a non-empty option argument.'
+        fi
+        ;;
+    --headers=?*)
+        headers=${1#*=} # Delete everything up to "=" and assign the remainder.
+        ;;
+    --url)
+      if [ "$2" ]; then
+        url=$2
+        shift
+      else
+        die 'ERROR: "--" requires a non-empty option argument.'
+      fi
+      ;;
+    --url=?*)
+      url=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --data-json)
+      if [ "$2" ]; then
+        data_json=$2
+        shift
+      else
+        die 'ERROR: "--data-json" requires a non-empty option argument.'
+      fi
+      ;;
+    --data-json=?*)
+      data_json=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --data-urlencode)
+      if [ "$2" ]; then
+        data_urlencode=$2
+        shift
+      else
+        die 'ERROR: "--data-json" requires a non-empty option argument.'
+      fi
+      ;;
+    --data-urlencode=?*)
+      data_urlencode=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --params)
+      if [ "$2" ]; then
+        params+=("$(urlencode "$2")")
+        shift
+      else
+        die 'ERROR: "--params" requires a non-empty option argument.'
+      fi
+      ;;
+    --params=?*)
+      params+=("$(urlencode "${1#*=}")") # Delete everything up to "=" and assign the remainder.
+      ;;
+    --store-response)
+      store_response=true
+      ;;
+    --verbose)
+      verbose=true
+      ;;
+    --) # End of all options.
+      shift
+      break
+      ;;
+    -?*)
+      printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+      ;;
+    *) # Default case: No more options, so break out of the loop.
+      break ;;
+    esac
+    shift
+  done
+
+  validate_url_format "$url"
+  validate_http_method "$method"
+
+}
+
+prepareResponseFilePath() {
+    script_filename=${token_script:-$(basename -- "$0")}
+    response_file_directory="$POSTMAN_ENV_PATH/responses"
+    mkdir -p $response_file_directory
+    response_file_name="${script_filename}-response.json"
+    response_file="${response_file_directory}/${response_file_name}"
+    [ -e "$response_file" ] && response_file="${response_file_directory}/${script_filename}-response-1.json"
+    echo "response will be saved on the filename: 'file://$response_file'"
+}
+
+# Function to execute a generic cURL request
+execute_curl() {
+  parseAndValidateNamedArguments "$@"
+  if [[ $method == "" ]]; then
+       echo "${YELLOW} Enter HTTP method${NO_COLOR}"
+
+       read -s method
+  fi
+
+  [[ $headers != *"Content-Type:"* ]] && headers+=",Content-Type: application/json"
+  local headers_string=$(headers_to_string "$headers")
+  # -s used to silent the progress
+  local curl_command="curl -s --location --request $method $url $headers_string --write-out "%{http_code}""
+
+  [[ $verbose ]] && curl_command+=" -v"
+  [[ -n "$data_urlencode" ]] && curl_command+=" $(data_to_urlencoded_string "$data_urlencode")"
+  [[ -n "$data_json" ]] && curl_command+=" --data '$data_json'"
+
+  [ "$store_response" = true ] && {
+    prepareResponseFilePath
+    curl_command+=" -o $response_file"
+  }
+
+  myProject setProxyIfNeeded
+  printf '\n ********** %s: command start ********** \n %s \n ********** %s: command end ********** \n' "$script_filename" "$curl_command" "$script_filename"
+  local response=$(eval "$curl_command")
+
+  local status_code=${response: -3} # Extract last 3 characters (status code)
+  chooseResponseColor "$status_code"
+
+  printf "=========== Response =========== \n"
+  #ternary operator
+  response_string=$([ "$store_response" = true ] && cat "$response_file" || echo " ${response%???}")${NO_COLOR}
+  echo "$response_string"
+
+  reset_vars
+}
+
+execute_post_request() {
+ execute_curl "$@" --method="POST"
+}
+
+execute_get_request() {
+ execute_curl "$@" --method="GET"
+}
+
+execute_put_request() {
+ execute_curl "$@" --method="PUT"
+}
+
+execute_delete_request() {
+ execute_curl "$@" --method="DELETE"
+}
+
+reset_vars() {
+  url=""
+  headers=""
+  data_json=""
+  data_urlencode=""
+  params=()
+  response_file=""
+  store_response=false
+  verbose=false
+
+#tokenHelper
+  extracted_response=""
+  access_token=""
+  expires_in=""
+}
+
+execute_post_request() {
+ execute_curl "$@" --method="POST"
+}
+
+execute_get_request() {
+ execute_curl "$@" --method="GET"
+}
+
+execute_put_request() {
+ execute_curl "$@" --method="PUT"
+}
+
+execute_delete_request() {
+ execute_curl "$@" --method="DELETE"
+}

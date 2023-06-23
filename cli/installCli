@@ -1,0 +1,17 @@
+#!/bin/sh
+
+echo "Ensuring your paths file is writable"
+sudo chown -R $(whoami) /etc/paths
+
+V=$(grep "$Project_REPOS_PATH/ProjectSetup/cli" /etc/paths)
+
+if [[ "$V" != "" ]]; then
+  echo "CLI already installed."
+else
+  echo "WARNING:  This will modify the system file /etc/paths"
+  echo ""
+  echo "$Project_REPOS_PATH/ProjectSetup/cli" >> /etc/paths
+  echo "CLI installed.  Restart your terminal if you want to use myProject cli commands"
+fi
+
+

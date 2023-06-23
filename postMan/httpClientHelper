@@ -1,0 +1,84 @@
+#!/bin/bash
+
+escape_double_quotes() {
+  local input_string="$1"
+  local escaped_string="${input_string//\"/\\\"}"
+  echo "$escaped_string"
+}
+
+# Function to convert headers string to headers argument
+headers_to_string() {
+  local headers="$1"
+  local headers_string=""
+
+  # Replace commas with newlines
+  headers=${headers//,/$'\n'}
+
+  while IFS= read -r line; do
+    headers_string+=" -H '$line'"
+  done <<<"$headers"
+
+  echo "$headers_string"
+}
+
+# Function to convert data string to URL-encoded argument
+data_to_urlencoded_string() {
+  local data="$1"
+  local data_string=""
+
+  while IFS= read -r line; do
+    data_string+=" --data-urlencode '$line'"
+  done <<<"$data"
+
+  echo "$data_string"
+}
+
+validate_http_method() {
+  local method="$1"
+  local valid_methods=("GET" "POST" "PUT" "DELETE" "PATCH")
+  local valid=false
+
+  for valid_method in "${valid_methods[@]}"; do
+    if [[ "$valid_method" == "$method" ]]; then
+      valid=true
+      break
+    fi
+  done
+
+  if [[ "$valid" == false ]]; then
+    echo "Invalid HTTP method: $method"
+    exit 1
+  fi
+}
+
+validate_url_format() {
+  local url="$1"
+  # Regular expression pattern for URL format validation
+  local url_pattern="^(http|https)://[a-zA-Z0-9.-]+.[a-zA-Z]{2,}(:(0-9)+)?(/.*)?$"
+
+  if [[ ! $url =~ $url_pattern ]]; then
+    echo "URL format is invalid: $url, should be in this format $url_pattern"
+    exit 1
+  fi
+}
+
+chooseResponseColor() {
+  local status_code="$1"
+  if [[ $status_code =~ ^(2|3)[0-9]{2}$ ]]; then
+    # Success status code, print in green color
+    echo "${GREEN}"
+  else
+    # Error status code, print in red color
+    echo "${RED}"
+  fi
+  echo "HTTP status: $status_code"
+}
+
+
+
+
+
+
+
+
+

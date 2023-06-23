@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. $POSTMAN_PATH/httpUmbrella
+
+prepareAzureToken "$Project_RESOURCE"
+
+# Define the request parameters
+url="$APIM_HOST/api/myProject/v1/scheduled-report"
+headers="Application-id: $OWNER_WEB_APPLICATION_ID
+Authorization: Bearer $access_token
+Trace-Id: $TRACE_ID"
+data_json=$(cat <<EOF
+{
+  "vin": "1FTEW1EG9JFC89426",
+  "lightHouseId": "e32c2a0d-68e5-4f22-8d49-9e559bf17625"
+}
+EOF
+)
+
+execute_post_request \
+    --url="$url" \
+    --headers="$headers" \
+    --data-json="$data_json"

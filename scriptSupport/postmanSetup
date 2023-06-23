@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Fail immediately if any errors occur
+#set -e
+
+read -p "Do you have Project projects in a folder other than ~/company/Project/repos? (y/n) " answer
+
+if [[ $answer =~ ^[Yy]$ ]]; then
+    read -r -p "Please provide the full path of the root folder. ex: /USER/company/Project/repos: " path
+    Project_REPOS_PATH="$path"
+else
+    Project_REPOS_PATH="$HOME/company/Project/repos"
+fi
+echo "Project_REPOS_PATH is set to: $Project_REPOS_PATH"
+
+if grep -q 'export Project_REPOS_PATH=' ~/.zshrc || grep -q 'export Project_SCRIPT_PATH=' ~/.zshrc; then
+    # If they exist, remove the lines using sed
+    sed -i '' '/export Project_REPOS_PATH=/d' ~/.zshrc
+    sed -i '' '/export Project_SCRIPT_PATH=/d' ~/.zshrc
+    echo "Project_REPOS_PATH and Project_SCRIPT_PATH lines removed from ~/.zshrc"
+else
+    # If they don't exist, print a message to the console
+    echo "Project_REPOS_PATH and Project_SCRIPT_PATH lines not found in ~/.zshrc"
+fi
+
+CURRENT_SCRIPT_DIR="$(dirname "$0")"
+ROOT_SCRIPT_DIR="$(dirname $CURRENT_SCRIPT_DIR)"
+
+echo "current script directory: $CURRENT_SCRIPT_DIR"
+echo "root script directory: $ROOT_SCRIPT_DIR"
+
+if [ ! -f ~/.myProjectc ]; then
+  Project_SCRIPT_PATH="$Project_REPOS_PATH/ProjectSetup/scriptSupport"
+  POSTMAN_PATH="$Project_REPOS_PATH/ProjectSetup/postMan"
+
+      cat > ~/.myProjectc <<EOF
+export Project_REPOS_PATH=$Project_REPOS_PATH
+export Project_SCRIPT_PATH=$Project_SCRIPT_PATH
+export POSTMAN_PATH=$POSTMAN_PATH
+EOF
+ echo "default path set to $HOME/company/Project/repos, restart the terminal"
+fi
+
+if [ ! -f ~/.bashrc ]; then
+    echo "source ~/.myProjectc" > ~/.bashrc
+fi
+if ! grep -q "~/.myProjectc" ~/.bashrc; then
+    echo "source ~/.myProjectc" >> ~/.bashrc
+fi
+if ! grep -q "shopt" ~/.bashrc; then
+    echo "shopt -s xpg_echo" >> ~/.bashrc
+fi
+if ! grep -q "~/.bashrc" ~/.zshrc; then
+    echo "source ~/.bashrc" >> ~/.zshrc
+fi
+
+source "$HOME/.bashrc"
+
+echo "restat your terminal session to apply the changes"
+echo "check this to verify changes applied successfully echo \$POSTMAN_PATH"

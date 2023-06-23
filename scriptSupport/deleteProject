@@ -1,0 +1,58 @@
+#!/bin/sh
+
+set -e
+pushd $Project_SCRIPT_PATH > /dev/null
+
+. $Project_SCRIPT_PATH/color.sh
+
+project_id=`grep projectID $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+service_name=""
+
+   die() {
+       printf '%s\n' "$1" >&2
+       exit 1
+   }
+
+   showHelp() {
+     echo 'login with right gcp project using myProject gcpLogin'
+   }
+
+   setupService() {
+     service_name=$1
+   }
+
+while :; do
+       case $1 in
+           -h|-\?|--help)
+               showHelp    # Display a usage synopsis.
+               exit
+               ;;
+           -s|--service)       # Takes an option argument; ensure it has been specified.
+               if [ "$2" ]; then
+                   setupService $2
+                   shift
+               else
+                   die 'ERROR: "--service" requires a non-empty option argument.'
+               fi
+               ;;
+           --service=?*)
+               setupService ${1#*=}
+               ;;
+           --service=)         # Handle the case of an empty --file=
+               die 'ERROR: "--service" requires a non-empty option argument.'
+               ;;
+           --)              # End of all options.
+               shift
+               break
+               ;;
+           -?*)
+               printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+               ;;
+           *)               # Default case: No more options, so break out of the loop.
+               break
+       esac
+       shift
+   done
+
+gcloud run services delete "${service_name}" --region='us-central1' --project=${project_id} --quiet
+popd > /dev/null

@@ -1,0 +1,67 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=$(basename $0)
+CMD=$1
+ARGS="${*:2}"
+Project_SERVICES_PATH=$POSTMAN_PATH/collections
+
+sh $Project_SCRIPT_PATH/color.sh
+
+if [[ "$CMD" != "cli" ]]; then
+     if [[ $(find "$POSTMAN_PATH/environments" -name $CMD -print -quit | wc -l) -gt 0 ]]; then
+            bash $POSTMAN_PATH/environments/$CMD $ARGS
+            exit 0
+     fi
+    if [[ $(find "$Project_SCRIPT_PATH" -name $CMD -print -quit | wc -l) -gt 0 ]]; then
+         sh $Project_SCRIPT_PATH/$CMD $ARGS
+         exit 0
+    fi
+    if [[ $(find "$Project_SERVICES_PATH" -name $CMD -print -quit | wc -l) -gt 0 ]]; then
+          sh $Project_SERVICES_PATH/$CMD $ARGS
+          exit 0
+    fi
+fi
+
+cliUsage() {
+    echo  "${GREEN}Project CLI Usage:"
+    echo  "  ${CYAN} myProject cli ${NO_COLOR}- Print Available list of script commands."
+    echo  "  ${CYAN} myProject without <args>${NO_COLOR}- Print Available list of commands."
+    echo  "  ${CYAN} myProject getConfigProperty <args> ${NO_COLOR}- setup spring project local property files and db certificates"
+    exit 1;
+}
+
+cliCommandList() {
+     echo "${CYAN}Project CLI Commands Available:${NO_COLOR}"
+     ls $Project_SCRIPT_PATH
+     echo "${MAGENTA} Project Postman commands: :${NO_COLOR}"
+     ls $Project_SERVICES_PATH
+     exit 0
+}
+
+launchUsage() {
+  echo "${GREEN}Project Launch Usage: ${CYAN} Project launch <abrv> <options> <command> ${NO_COLOR}"
+  echo "     ${BLUE}Abrv is the abbreviation: ${MAGENTA}" $( appStat | jq ".[] | .abrv" )
+  echo "     ${BLUE}Command can be: ${NO_COLOR}start, stop, restart, bg (background), bgr / rbg (background restart), stat, etc."
+  echo "     ${BLUE}For options and a full list of commands, see 'launchIt.sh', or run the launch script."
+  exit 1;
+}
+
+case ${CMD} in
+  cli)
+    cliCommandList
+    exit 0;
+    ;;
+
+  -h|--help|help|-?|?)
+    cliUsage
+    exit 1;
+    ;;
+  *)
+    echo "${RED}Command not found: ${CYAN}${CMD}"
+    echo "${CYAN}Run any one of the following commands${NO_COLOR}"
+    cliCommandList
+    exit 1
+    ;;
+esac
+

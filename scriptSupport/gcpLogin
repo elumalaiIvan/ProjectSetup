@@ -1,0 +1,216 @@
+#!/bin/sh
+
+#set -e
+#echo "Pulling property configuration from GCP secret manager..."
+. $Project_SCRIPT_PATH/color.sh
+. $Project_SCRIPT_PATH/loginSecrets.sh
+
+pushd $Project_SCRIPT_PATH > /dev/null
+
+   # Initialize all the option variables.
+   # This ensures we are not contaminated by variables from the environment.
+   export service=""
+   environment=""
+   export projectNumber=0
+   export projectID=""
+   propertyFile=""
+   wifAccount=""
+   client_id=""
+   client_secret=""
+
+   die() {
+       printf '%s\n' "$1" >&2
+       exit 1
+   }
+
+   setupEnvironment() {
+        if [[ $environment == "STAGE" ]] || [[ $environment == "stg" ]] || [[ $environment == "stage" ]]; then
+           setStage
+        elif [[ $environment == "PROD" ]] || [[ $environment == "prod" ]]; then
+           setProd
+        else
+           tryAgainWithValidEnvironment
+        fi
+   }
+
+   setStage() {
+     environment="stg"
+     projectNumber=$STAGE_PROJECT_NUMBER
+     projectID=$STAGE_PROJECT_ID
+     propertyFile='application-gcp-stg.properties'
+     wifAccount=$STAGE_WIF_ACCOUNT
+     client_id=$STAGE_CLIENT_ID
+     client_secret=$STAGE_CLIENT_SECRET
+     echo "Setting stg: ${GREEN}projectNumber=${projectNumber}, projectID=${projectID} ${NO_COLOR}"
+   }
+
+   setProd() {
+     environment="prod"
+     projectNumber=$PROD_PROJECT_NUMBER
+     projectID=$PROD_PROJECT_ID
+     propertyFile='application-gcp-prod.properties'
+     wifAccount=$PROD_WIF_ACCOUNT
+     client_id=$PROD_CLIENT_ID
+     client_secret=$PROD_CLIENT_SECRET
+     echo "Setting prod: ${GREEN} projectNumber=${projectNumber}, projectID=${projectID} ${NO_COLOR}"
+   }
+
+   tryAgainWithValidEnvironment() {
+      echo "${RED} Options should be stg (or) prod ${NO_COLOR}"
+      exit 1;
+   }
+
+   setupService() {
+     if [[ $1 == "myProject-schedules-service" ]] || [[ $1 == "myProject-core-service" ]]; then
+        service=$1
+        echo "${BLUE} Setting $service ${NO_COLOR}"
+     else
+        echo "${RED} Set correct service names ${NO_COLOR}"
+     fi
+   }
+
+  setScheduleProcessor() {
+      service='myProject-schedules-processor'
+      echo "${BLUE}Setting $service${NO_COLOR}"
+    }
+
+   setScheduleService() {
+     echo "test completed $1"
+     service='myProject-schedules-service'
+     echo "${BLUE}Setting $service${NO_COLOR}"
+   }
+
+   setCoreService() {
+     service='myProject-core-service'
+     echo "${BLUE}Setting $service${NO_COLOR}"
+   }
+
+   tryAgainWithValidProject() {
+     echo "${RED} Options should be myProject-schedules-service (or) myProject-schedules-service ${NO_COLOR}"
+     exit 1;
+   }
+
+   showHelp() {
+     echo "${CYAN} go ahead with no arguments ${NO_COLOR}"
+   }
+
+   echo "loggin in..."
+
+   while :; do
+       case $1 in
+           -h|-\?|--help)
+               showHelp    # Display a usage synopsis.
+               exit
+               ;;
+           -s|--service)       # Takes an option argument; ensure it has been specified.
+               if [ "$2" ]; then
+                   setupService $2
+                   shift
+               else
+                   die 'ERROR: "--service" requires a non-empty option argument.'
+               fi
+               ;;
+           --service=?*)
+               setupService ${1#*=}
+               ;;
+           --service=)         # Handle the case of an empty --file=
+               die 'ERROR: "--service" requires a non-empty option argument.'
+               ;;
+           -e|--environment|-env)
+              if [ "$2" ]; then
+                 environment=$2
+                 setupEnvironment
+                 shift
+              else
+                 die 'ERROR: "--environment" requires a non-empty option argument.'
+              fi
+              ;;
+           --environment=?*|--env=?*)
+               environment=${1#*=} # Delete everything up to "=" and assign the remainder.
+               setupEnvironment
+               ;;
+           --environment=|--env=)         # Handle the case of an empty --file=
+               die 'ERROR: "--environment" requires a non-empty option argument.'
+               ;;
+           --)              # End of all options.
+               shift
+               break
+               ;;
+           -?*)
+               printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+               ;;
+           *)               # Default case: No more options, so break out of the loop.
+               break
+       esac
+       shift
+   done
+
+if [[ $service == "" ]]; then
+  echo "${YELLOW}=============================${NO_COLOR}"
+  echo "  ${CYAN}1. ${BLUE}schedules-service"
+  echo "  ${CYAN}2. ${BLUE}core-service"
+  echo "  ${CYAN}3. ${BLUE}schedules-processor"
+  echo "${YELLOW}=============================${NO_COLOR}"
+  printf "${MAGENTA}Select Project: ${NO_COLOR}"
+  read -s -n1 n
+  echo
+  case ${n} in
+      1|S|s)
+        setScheduleService
+        ;;
+      2|C|c)
+        setCoreService
+        ;;
+      3|SP|sp)
+        setScheduleProcessor
+        ;;
+      *)
+        tryAgainWithValidProject
+        ;;
+  esac
+fi
+
+if [[ $environment == "" ]]; then
+  echo  "${YELLOW}=============================${NO_COLOR}"
+  echo  "  ${CYAN}1. ${BLUE}STAGE"
+  echo  "  ${CYAN}2. ${BLUE}PROD"
+  echo  "${YELLOW}=============================${NO_COLOR}"
+  echo "${MAGENTA}Select Environment: ${NO_COLOR}"
+  read -s -n1 n
+  echo
+  case ${n} in
+      1|S|s)
+        setStage
+        ;;
+      2|P|p)
+        setProd
+        ;;
+      *)
+        tryAgainWithValidEnvironment
+        ;;
+  esac
+fi
+
+serviceRootPath=$Project_REPOS_PATH/$service
+
+  echo "service=$service" > projectInfo.txt
+  echo "environment=$environment" >> projectInfo.txt
+  echo "projectNumber=$projectNumber" >> projectInfo.txt
+  echo "projectID=$projectID" >> projectInfo.txt
+  echo "serviceRootPath=$serviceRootPath" >> projectInfo.txt
+  echo "propertyFile=$propertyFile" >> projectInfo.txt
+
+curl --location --request POST 'https://corp.sts.company.com/adfs/oauth2/token' \
+                            --header 'Content-Type: application/x-www-form-urlencoded' \
+                            --data-urlencode 'grant_type=client_credentials' \
+                            --data-urlencode 'response_type=token' \
+                            --data-urlencode "client_id=${client_id}" \
+                            --data-urlencode "client_secret=${client_secret}" \
+                            --data-urlencode "resource=https://iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/adfs-idp/providers/adfs-app" \
+                            | jq -r '.access_token' > token.key
+
+#To avoid user input (Yes or no) when login
+gcloud auth revoke --all > /dev/null
+gcloud auth login --cred-file="wifCredentials/credentials-${environment}.json"
+
+popd > /dev/null

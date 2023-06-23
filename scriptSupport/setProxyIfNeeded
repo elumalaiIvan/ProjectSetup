@@ -1,0 +1,16 @@
+#!/bin/bash
+
+  vpn_interface=$(ifconfig | grep -o "utun[0-9]" | head -1)
+
+  if [[ -n "$vpn_interface" ]]; then
+    vpn_gateway=$(netstat -rn | awk -v utun_ip="$(ifconfig $vpn_interface | awk '/inet/ {print $2}')" '/^default.* / {if ($2==utun_ip) print $2; exit}')
+    if [[ -n "$vpn_gateway" ]]; then
+      echo "you are on VPN"
+      export ALL_PROXY="http://internet.company.com:83"
+    else
+      export ALL_PROXY=
+    fi
+  else
+    export ALL_PROXY=
+  fi
+

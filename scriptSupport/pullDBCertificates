@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+pushd $Project_SCRIPT_PATH > /dev/null
+
+. $Project_SCRIPT_PATH/color.sh
+
+project_id=`grep projectID $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+serviceRootPath=`grep serviceRootPath $Project_SCRIPT_PATH/projectInfo.txt | cut -d'=' -f2`
+
+dbCertificates="db-certificates"
+mkdir -p $serviceRootPath/$dbCertificates
+
+echo "Pulling DB certificates from GCP secret manager..."
+
+gcloud secrets versions access latest --secret=DB_CLIENT_CERT_DUPLICATE --project=${project_id} > $serviceRootPath/$dbCertificates/client.cert
+gcloud secrets versions access latest --secret=DB_CLIENT_KEY_DUPLICATE --project=${project_id} > $serviceRootPath/$dbCertificates/key.pk8
+gcloud secrets versions access latest --secret=DB_ROOT_CERT_DUPLICATE --project=${project_id} > $serviceRootPath/$dbCertificates/root.cert
+
+echo "${GREEN} DB certificates updated on the project $project_id ${NO_COLOR}"
+
+popd > /dev/null

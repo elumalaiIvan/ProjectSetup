@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+echo "Creating Project base directory..."
+
+declare -a productName="Project"
+mkdir -pv $Project_REPOS_PATH
+echo "repos path to be taken for clone: $Project_REPOS_PATH"
+
+pushd $Project_REPOS_PATH || exit
+
+echo "Cloning $productName Projects..."
+echo "----------------------------------------------"
+declare -a reposToBeCloned=("myProject-schedules-service" "myProject-schedules-processor" "myProject-core-service" "JenkinsSharedLibrary" "ProjectSetupPlugin")
+
+## now loop through the above array
+for i in "${reposToBeCloned[@]}"
+do
+   declare -a orgName="VHA"
+   repoName="$i"
+   if test -d $repoName; then
+     echo "$repoName already exists. Skipping..."
+   else
+     echo "Cloning $repoName..."
+     git clone git@github.company.com:$orgName/$repoName.git
+  fi
+done
+
+popd

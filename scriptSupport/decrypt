@@ -1,0 +1,51 @@
+#!/bin/sh
+set -e
+. $Project_SCRIPT_PATH/color.sh
+
+pass=''
+
+while :; do
+       case $1 in
+           -h|-\?|--help)
+               showHelp    # Display a usage synopsis.
+               exit
+               ;;
+           -p|--pass)       # Takes an option argument; ensure it has been specified.
+               if [ "$2" ]; then
+                   pass=$2
+                   shift
+               else
+                   die 'ERROR: "--service" requires a non-empty option argument.'
+               fi
+               ;;
+           --pass=?*)
+               pass=${1#*=}
+               ;;
+           --pass=)         # Handle the case of an empty --file=
+               die 'ERROR: "--service" requires a non-empty option argument.'
+               ;;
+           --)              # End of all options.
+               shift
+               break
+               ;;
+           -?*)
+               printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+               ;;
+           *)               # Default case: No more options, so break out of the loop.
+               break
+       esac
+       shift
+   done
+
+   if [[ $pass == "" ]]; then
+     echo "${YELLOW} Enter password to decypt the file${NO_COLOR}"
+
+     read -s pass
+   fi
+
+#should execute this with password to decrypt, ask your manager for password
+openssl enc -d -aes-256-cbc -in $Project_SCRIPT_PATH/sample.enc -out $Project_SCRIPT_PATH/loginSecrets.sh -pass pass:$pass
+
+echo "decrypted"
+
+

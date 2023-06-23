@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+echo "Moving Project plugin jar from ProjectSetupPlugin into intellij plugin path..."
+
+cp $Project_REPOS_PATH/ProjectSetupPlugin/build/libs/ProjectSetupPlugin*.jar ~/Library/Application\ Support/JetBrains/IntelliJIdea?*/plugins
+
+echo "Restart your intellij to work with plugin features"
